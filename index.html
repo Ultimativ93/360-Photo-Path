@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=UTF-8 />
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+</head>
+
+<body>
+    <script src="three.js"></script>
+    <script src="GLTFLoader.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script>
+        let scene, camera, renderer;
+
+        function init() {
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xdddddd);
+
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000);
+            camera.rotation.y = 45 / 180 * Math.PI;
+            camera.position.x = 0;
+            camera.position.y = 0;
+            camera.position.z = 1;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth / 1.2, window.innerHeight / 1.2);
+            let canvas = renderer.domElement;
+            canvas.id = "Fenster";
+            document.body.appendChild(canvas);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement)
+            controls.update('change', renderer);
+            controls.maxDistance = 4;
+
+            canvas.addEventListener('contextmenu', changeSpherePosition, false);
+            canvas.addEventListener('click', checkIfArrowHit, false);
+
+            // Sphere Position ändern
+            let count = 0;
+
+            function changeSpherePosition() {
+                console.log(scene.children[2].children[1].position)
+                console.log(scene.children[2].children[2].position)
+
+                if (scene.children[2].children[1].position.x == 0) {
+                    scene.children[2].children[1].position.set(-25, 0, 0);
+                    scene.children[2].children[2].position.set (0, 0, 0);
+                } else if (scene.children[2].children[2].position.x == 0){
+                    scene.children[2].children[2].position.set(-25);
+                    scene.children[2].children[1].position.set(0, 0, 0);
+                }
+            }
+
+            function checkIfArrowHit() {
+                renderer.domElement.addEventListener("clicked", onclick, true)
+                var arrow1 = scene.getObjectByName("arrow1");
+                var raycaster = new THREE.Raycaster();
+                var mouse = new THREE.Vector2();
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 0.8;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 0.8;
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    for (let i = 0; i < intersects.length; i++) {
+                        if (intersects[i].object.name == arrow1.name) {
+                            changeSpherePosition();
+                        }
+                        break;
+                    }
+                }
+            }
+
+            hlight = new THREE.AmbientLight(0x404040, 5);
+            scene.add(hlight);
+
+            let loader = new THREE.GLTFLoader();
+
+            //Spheren Laden
+            loader.load('objects/ZweiSpheren.gltf', function (gltf) {
+                sphere1 = gltf.scene.children[1];
+                sphere1.position.set(0, 0, 0);
+                sphere1.name = "Sphere1"
+
+                sphere2 = gltf.scene.children[2];
+                sphere2.position.set(-25, 0, 0);
+                sphere2.name = "Sphere2"
+
+                scene.add(gltf.scene);
+                animate();
+            });
+
+            // Pfeile Laden
+            loader.load('objects/Pfeil_G.gltf', function (gltf) {
+                arrow1 = gltf.scene.children[0];
+                arrow1.material.color.setHex(0xd3d3d3);
+                arrow1.position.set(-1, -1, 1.25);
+                arrow1.rotation.set(0, 0.9, 0);
+                arrow1.name = "arrow1";
+                scene.add(gltf.scene);
+                animate();
+            });
+        }
+
+        function animate() {
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
